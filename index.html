@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Bot</title>
+</head>
+
+<body>
+  Let's Start
+  <script src="node_modules/socket.io-client/socket.io.js"></script>
+  <script>
+    var socket = io('http://10.7.90.8:4000');
+    var topPocketX=967.7419,topPocketY=967.7419,bottomPocketX=967.7419,bottomPocketY=32.2581;
+    var baseToboard = 153.2258;
+    var coinRadius = 25;
+    var strikerRadius = 30;
+    var hit = false;
+     socket.on( 'connect', function() {
+       console.log('Connection Established! Ready to send/receive data!');
+       socket.emit('connect_game',{playerKey:"yVcnTziKuR",gameKey:"GxEnSLcXIxjmrxv1lneH"});
+    } );
+    socket.on('your_turn',function(data) {
+       console.log('Received a message from the server!',data);
+        searchCutShot(data)
+        if (!hit){
+          socket.emit('player_input',{ position: 500, force: 2000, angle: 90});
+        }
+     });
+     function searchCutShot(data){
+         data.position.forEach(function(coin){
+           if(coin.x>baseToboard+coinRadius && hit!=true){
+               var slop = (coin.y-topPocketY)/(coin.x-topPocketX);
+               var pos = slop*(baseToboard-coin.x)+coin.y;
+               if(pos >= 0 && pos <= 1000){
+                // Extend the line
+
+                var lenOfCoinAndHole = Math.sqrt(Math.pow((topPocketX - coin.x), 2) + Math.pow((topPocketY - coin.y), 2))
+                var cutPointX = coin.x + (coin.x - topPocketX) / lenOfCoinAndHole * (coinRadius+strikerRadius);
+                var cutPointY = coin.y + (coin.y - topPocketY) / lenOfCoinAndHole * (coinRadius+strikerRadius);
+
+                // var cutAngle = 90;
+                // var cutPosition = cutPointY;
+                var cutPosition = randomIntFromInterval(pos,cutPointY);
+                var dy = cutPointY - cutPosition;
+                var dx = cutPointX - 153.2258;
+                var theta = Math.atan2(-dy, dx); // range (-PI, PI]
+                theta *= 180 / Math.PI; // rads to degs, range (-180, 180]
+                var cutAngle = 90-(theta);
+
+                if(cutPointY > 806.4516){
+                   cutPosition = 806.4516;
+                   var dy = cutPointY - 806.4516;
+                   var dx = cutPointX - 153.2258;
+                   var theta = Math.atan2(-dy, dx); // range (-PI, PI]
+                   theta *= 180 / Math.PI; // rads to degs, range (-180, 180]
+                   cutAngle = 90-(theta);
+
+                  // cutAngle
+                }
+
+                 hit = true;
+                 socket.emit('player_input',{ position: cutPosition, force: 2000, angle: cutAngle});
+                 return false;
+               }
+            }
+         });
+         hit = false;
+     }
+     function randomIntFromInterval(min,max){
+         return Math.random()*(max-min+1)+min;
+     }
+    // function searchThroughShot(data){
+    //     data.position.forEach(function(coin){
+    //       if(coin.x>baseToboard && hit!=true){
+    //           var slop = (coin.y-topPocketY)/(coin.x-topPocketX);
+    //           var pos = slop*(baseToboard-coin.x)+coin.y;
+    //           if(pos >= 193.5484 && pos <= 806.4516){
+    //             console.log(pos);
+    //             var dy = topPocketY - coin.y;
+    //             var dx = topPocketX - coin.x;
+    //             var theta = Math.atan2(-dy, dx); // range (-PI, PI]
+    //             theta *= 180 / Math.PI; // rads to degs, range (-180, 180]
+    //             var angleWithX = 90-(theta);
+    //
+    //             hit = true;
+    //             socket.emit('player_input',{ position: pos, force: 2500, angle: angleWithX});
+    //             return false;
+    //           }
+    //        }
+    //     });
+    //     hit = false;
+    // }
+
+
+  </script>
+</body>
+
+</html>

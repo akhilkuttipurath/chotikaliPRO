@@ -1,0 +1,9 @@
+{
+  "name": "bot",
+  "version": "0.0.1",
+  "description": "carroms bot",
+  "dependencies": {
+    "express": "^4.10.2",
+    "socket.io": "^1.4.8"
+  }
+}
